@@ -116,6 +116,10 @@ class MainActivity : FlutterActivity() {
             @Suppress("DEPRECATION")
             ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
         }
+        // Kuch phones par toggle ON karne ke baad bhi mode DEFAULT rehta hai, tab permission se check karo.
+        if (mode == AppOpsManager.MODE_DEFAULT) {
+            return checkSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED
+        }
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
@@ -136,6 +140,7 @@ class MainActivity : FlutterActivity() {
                 .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent())
                 .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
                     "This stops your child from deleting Quiz Lock without the parent PIN."))
+            "appinfo" -> launch(Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))
             "autostart" -> launch(*autostartIntents().toTypedArray(),
                 Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))
         }

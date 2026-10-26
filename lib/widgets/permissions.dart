@@ -40,6 +40,9 @@ class PermissionsList extends StatefulWidget {
 class _PermissionsListState extends State<PermissionsList>
     with WidgetsBindingObserver {
   Map<String, bool> _granted = {};
+
+  /// Zaroori permissions jinke liye user settings mein ja chuka hai.
+  final _tried = <String>{};
   bool _autostartDone = false;
 
   List<PermissionInfo> get _items =>
@@ -80,8 +83,14 @@ class _PermissionsListState extends State<PermissionsList>
             title: p.required ? '${p.title} (required)' : p.title,
             why: p.why,
             granted: _granted[p.key] == true,
-            onTap: () => Native.openPermission(p.key),
+            onTap: () {
+              _tried.add(p.key);
+              Native.openPermission(p.key);
+            },
           ),
+        if (_items.any((p) =>
+            p.required && _tried.contains(p.key) && _granted[p.key] != true))
+          const _RestrictedHelp(),
         _PermissionTile(
           title: 'Autostart',
           why:
@@ -123,6 +132,48 @@ class _PermissionTile extends StatelessWidget {
         trailing: granted
             ? null
             : FilledButton.tonal(onPressed: onTap, child: const Text('Allow')),
+      ),
+    );
+  }
+}
+
+/// Android 13+ par Play Store ke bahar se install hue apps ke liye ye toggles
+/// "Restricted setting" ki wajah se grey ho jaate hain.
+class _RestrictedHelp extends StatelessWidget {
+  const _RestrictedHelp();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Card(
+      elevation: 0,
+      color: scheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Phone not letting you turn it on?',
+                style: text.titleMedium
+                    ?.copyWith(color: scheme.onErrorContainer)),
+            const SizedBox(height: 8),
+            Text(
+              'Android blocks this for apps installed from outside the Play Store. To allow it:\n'
+              '1. Tap "Open App info" below\n'
+              '2. Tap the ⋮ menu (top right) → "Allow restricted settings"\n'
+              '3. Confirm with your fingerprint/PIN\n'
+              '4. Come back here and tap Allow again\n\n'
+              'Xiaomi/Redmi/POCO: in App info, also open "Other permissions" and allow "Display pop-up windows while running in the background".',
+              style: TextStyle(color: scheme.onErrorContainer),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () => Native.openPermission('appinfo'),
+              child: const Text('Open App info'),
+            ),
+          ],
+        ),
       ),
     );
   }
