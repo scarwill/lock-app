@@ -98,17 +98,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      on ? '🔒 Lock chalu hai' : '⚠️ Lock abhi nahi chal raha',
+                      on ? '🔒 Lock is on' : '⚠️ Lock is not running',
                       style: text.headlineSmall?.copyWith(color: Colors.white),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${s.lockedApps.length} apps lock'
+                      '${s.lockedApps.length} apps locked'
                       '${s.locksScreen ? ' + lock screen quiz' : ''}',
                       style: const TextStyle(color: Colors.white),
                     ),
                     if (st.freeUntil != null)
-                      Text('Free time: ${_time(st.freeUntil!)} tak',
+                      Text('Free until ${_time(st.freeUntil!)}',
                           style: const TextStyle(color: Colors.white)),
                   ],
                 ),
@@ -118,23 +118,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.error, color: Colors.red),
-                  title: Text('Permission band ho gayi: ${missing.join(', ')}'),
-                  subtitle: const Text('Iske bina lock kaam nahi karega.'),
+                  title: Text('Permission turned off: ${missing.join(', ')}'),
+                  subtitle: const Text('The lock will not work without it.'),
                   trailing: FilledButton(
                     onPressed: () => Native.openPermission(
                         _perms['usage'] != true ? 'usage' : 'overlay'),
-                    child: const Text('Theek karo'),
+                    child: const Text('Fix'),
                   ),
                 ),
               ),
             const SizedBox(height: 8),
-            Text('Aaj', style: text.titleMedium),
+            Text('Today', style: text.titleMedium),
             const SizedBox(height: 8),
             Row(
               children: [
-                _Stat('Sahi', '${st.todayCorrect}', Colors.green),
-                _Stat('Galat', '${st.todayWrong}', Colors.red),
-                _Stat('Skip bache', '${st.skipsLeft}', Colors.blue),
+                _Stat('Correct', '${st.todayCorrect}', Colors.green),
+                _Stat('Wrong', '${st.todayWrong}', Colors.red),
+                _Stat('Skips left', '${st.skipsLeft}', Colors.blue),
               ],
             ),
             if (_pending != null) ...[
@@ -142,9 +142,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.schedule),
-                  title: const Text('Ek change pending hai'),
+                  title: const Text('A change is pending'),
                   subtitle:
-                      Text('${_date(_pending!.applyAt)} ko lagu hoga.'),
+                      Text('Takes effect on ${_date(_pending!.applyAt)}.'),
                   trailing: TextButton(
                     onPressed: () async {
                       await Native.cancelPending();
@@ -159,13 +159,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             FilledButton.icon(
               onPressed: Native.testQuiz,
               icon: const Icon(Icons.play_arrow),
-              label: const Text('Test quiz chalao'),
+              label: const Text('Try a test quiz'),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: _openSettings,
               icon: const Icon(Icons.settings),
-              label: const Text('Settings badlo'),
+              label: const Text('Change settings'),
             ),
           ],
         ),

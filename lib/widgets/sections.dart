@@ -123,9 +123,9 @@ class LockTypeSection extends StatelessWidget {
       children: [
         ChoiceCard(
           icon: Icons.apps,
-          title: 'Sirf Apps',
+          title: 'Apps only',
           subtitle:
-              'Jo apps tum chunoge, sirf wahi kholne par quiz aayega. Shuruaat ke liye ye best hai.',
+              'The quiz appears only when you open the apps you choose. Best to start with.',
           selected: settings.lockType == LockSettings.lockApps,
           onTap: () {
             settings.lockType = LockSettings.lockApps;
@@ -137,7 +137,7 @@ class LockTypeSection extends StatelessWidget {
           icon: Icons.screen_lock_portrait,
           title: 'Apps + Lock Screen',
           subtitle:
-              'Phone unlock karte hi quiz aayega, aur chune hue apps bhi lock rahenge. Sabse strict.',
+              'The quiz appears every time you unlock the phone, and your chosen apps stay locked too. Strictest.',
           selected: settings.lockType == LockSettings.lockAppsAndScreen,
           onTap: () {
             settings.lockType = LockSettings.lockAppsAndScreen;
@@ -179,7 +179,7 @@ class QuizSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         OptionRow(
-          label: 'Ek baar mein kitne sahi jawab',
+          label: 'Correct answers needed each time',
           values: const [1, 3, 5],
           value: settings.questionsPerUnlock,
           format: (v) => '$v',
@@ -189,8 +189,8 @@ class QuizSection extends StatelessWidget {
           },
         ),
         OptionRow(
-          label: 'Galat jawab par rukna',
-          hint: 'Taki tukka maar ke na nikal sako',
+          label: 'Wait after a wrong answer',
+          hint: 'Stops random guessing',
           values: const [10, 15, 30],
           value: settings.penaltySeconds,
           format: (v) => '$v sec',
@@ -215,8 +215,8 @@ class FreeTimeSection extends StatelessWidget {
     return Column(
       children: [
         OptionRow(
-          label: 'Sahi jawab ke baad kitni der free',
-          hint: 'Is time mein dobara quiz nahi aayega',
+          label: 'Free time after passing',
+          hint: 'No quiz during this time',
           values: const [15, 30, 60],
           value: settings.cooldownMinutes,
           format: (v) => '$v min',
@@ -226,8 +226,8 @@ class FreeTimeSection extends StatelessWidget {
           },
         ),
         OptionRow(
-          label: 'Din mein Emergency Skip',
-          hint: 'Bina quiz ke kholne ka mauka. Raat 12 baje reset hota hai.',
+          label: 'Emergency skips per day',
+          hint: 'Open without a quiz. Resets at midnight.',
           values: const [0, 1, 2],
           value: settings.dailySkips,
           format: (v) => '$v',
@@ -315,7 +315,7 @@ class _AppPickerState extends State<AppPicker> {
           child: TextField(
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.search),
-              hintText: 'App dhundo',
+              hintText: 'Search apps',
               border: OutlineInputBorder(),
               isDense: true,
             ),
@@ -326,7 +326,7 @@ class _AppPickerState extends State<AppPicker> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text('${widget.selected.length} app chune'),
+            child: Text('${widget.selected.length} selected'),
           ),
         ),
         Expanded(
@@ -342,7 +342,7 @@ class _AppPickerState extends State<AppPicker> {
               ],
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text('Saare apps', style: style),
+                child: Text('All apps', style: style),
               ),
               ...filtered.map(_tile),
             ],
@@ -412,7 +412,7 @@ class _HoldButtonState extends State<HoldButton>
                 ),
                 Center(
                   child: Text(
-                    _anim.value > 0 ? 'Dabaye rakho...' : widget.label,
+                    _anim.value > 0 ? 'Keep holding...' : widget.label,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -439,7 +439,7 @@ Future<bool> askPin(BuildContext context) async {
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('Parent PIN dalo'),
+        title: const Text('Enter parent PIN'),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -457,10 +457,10 @@ Future<bool> askPin(BuildContext context) async {
               if (await Native.checkPin(ctrl.text)) {
                 if (context.mounted) Navigator.pop(context, true);
               } else {
-                setState(() => error = 'Galat PIN');
+                setState(() => error = 'Wrong PIN');
               }
             },
-            child: const Text('Kholo'),
+            child: const Text('Unlock'),
           ),
         ],
       ),

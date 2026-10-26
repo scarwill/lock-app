@@ -71,14 +71,14 @@ class LockSettings {
   /// dheela change nahi, turant lagu ho sakta hai.
   List<String> looserThan(LockSettings old) {
     final reasons = <String>[];
-    if (old.enabled && !enabled) reasons.add('Lock band karna');
+    if (old.enabled && !enabled) reasons.add('Turning the lock off');
     final removed = old.lockedApps.where((p) => !lockedApps.contains(p));
-    if (removed.isNotEmpty) reasons.add('${removed.length} app lock se hatana');
-    if (old.locksScreen && !locksScreen) reasons.add('Lock screen quiz hatana');
-    if (questionsPerUnlock < old.questionsPerUnlock) reasons.add('Kam sawal');
-    if (penaltySeconds < old.penaltySeconds) reasons.add('Penalty kam karna');
-    if (cooldownMinutes > old.cooldownMinutes) reasons.add('Free time badhana');
-    if (dailySkips > old.dailySkips) reasons.add('Zyada skip');
+    if (removed.isNotEmpty) reasons.add('Unlocking ${removed.length} app(s)');
+    if (old.locksScreen && !locksScreen) reasons.add('Removing the lock screen quiz');
+    if (questionsPerUnlock < old.questionsPerUnlock) reasons.add('Fewer questions');
+    if (penaltySeconds < old.penaltySeconds) reasons.add('Shorter penalty');
+    if (cooldownMinutes > old.cooldownMinutes) reasons.add('Longer free time');
+    if (dailySkips > old.dailySkips) reasons.add('More skips');
     return reasons;
   }
 }
@@ -90,7 +90,7 @@ class Category {
 }
 
 const categories = [
-  Category('mixed', 'Sab mix'),
+  Category('mixed', 'Mixed'),
   Category('maths', 'Maths'),
   Category('science', 'Science'),
   Category('english', 'English'),

@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _pickApps() async {
     await Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => Scaffold(
-        appBar: AppBar(title: const Text('Apps chuno')),
+        appBar: AppBar(title: const Text('Choose apps')),
         body: AppPicker(selected: _draft.lockedApps, onChanged: () {}),
       ),
     ));
@@ -32,7 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _save() async {
     if (_draft.lockedApps.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kam se kam 1 app chuno')));
+          const SnackBar(content: Text('Pick at least 1 app')));
       return;
     }
     final looser = _draft.looserThan(widget.current);
@@ -41,16 +41,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Ye change 24 ghante baad lagu hoga'),
+          title: const Text('This change takes effect in 24 hours'),
           content: Text(
-              'Isme lock dheela ho raha hai:\n• ${looser.join('\n• ')}\n\nTab tak purani settings chalti rahengi. Pehle se koi change pending hai to wo cancel ho jayega.'),
+              'This loosens the lock:\n• ${looser.join('\n• ')}\n\nYour current settings stay until then. Any change already pending will be cancelled.'),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Rehne do')),
+                child: const Text('Cancel')),
             FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Theek hai')),
+                child: const Text('OK')),
           ],
         ),
       );
@@ -77,12 +77,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Lock chalu'),
+            title: const Text('Lock on'),
             value: _draft.enabled,
             onChanged: (v) => setState(() => _draft.enabled = v),
           ),
           const Divider(),
-          Text('Lock ka type', style: text.titleLarge),
+          Text('Lock type', style: text.titleLarge),
           const SizedBox(height: 8),
           LockTypeSection(settings: _draft, onChanged: _changed),
           const SizedBox(height: 16),
@@ -90,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: ListTile(
               leading: const Icon(Icons.apps),
               title: const Text('Locked apps'),
-              subtitle: Text('${_draft.lockedApps.length} app chune'),
+              subtitle: Text('${_draft.lockedApps.length} selected'),
               trailing: const Icon(Icons.chevron_right),
               onTap: _pickApps,
             ),

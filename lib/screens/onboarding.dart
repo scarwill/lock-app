@@ -49,48 +49,48 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _changed() => setState(() {});
 
   List<_Step> get _steps => [
-        _Step('Quiz Lock mein swagat hai 👋', _modeStep,
-            subtitle: 'Ye app kiske liye set kar rahe ho?'),
+        _Step('Welcome to Quiz Lock 👋', _modeStep,
+            subtitle: 'Who are you setting this up for?'),
         if (_s.isParent)
-          _Step('Parent PIN banao', _pinStep,
+          _Step('Create a parent PIN', _pinStep,
               subtitle:
-                  'Ye PIN settings badalne aur bachche ka phone kholne mein lagega.',
+                  'You will need this PIN to change settings and to unlock your child\'s phone.',
               canNext: () =>
                   _pin1.text.length == 4 && _pin1.text == _pin2.text),
-        _Step('Lock kaisa chahiye?', () => LockTypeSection(
+        _Step('What should be locked?', () => LockTypeSection(
                 settings: _s, onChanged: _changed)),
-        _Step('Kaunse apps lock karne hain?',
+        _Step('Which apps do you want to lock?',
             () => AppPicker(selected: _s.lockedApps, onChanged: _changed),
-            subtitle: 'Kam se kam 1 app chuno.',
+            subtitle: 'Pick at least 1 app.',
             canNext: () => _s.lockedApps.isNotEmpty,
             scrolls: true),
         _Step('Quiz settings',
             () => QuizSection(settings: _s, onChanged: _changed)),
-        _Step('Free time aur skip',
+        _Step('Free time and skips',
             () => FreeTimeSection(settings: _s, onChanged: _changed)),
-        _Step('⚠️ Dhyan se padho', _cautionStep, canNext: () => _confirmed),
+        _Step('⚠️ Read carefully', _cautionStep, canNext: () => _confirmed),
         _Step('Permissions', _permissionsStep,
-            subtitle: 'Ek-ek karke allow karo. Zaroori wale ke bina lock nahi chalega.',
+            subtitle: 'Allow them one by one. The lock won\'t work without the required ones.',
             canNext: () => _permissionsOk),
-        _Step('Test karke dekho', _testStep),
+        _Step('Try it out', _testStep),
       ];
 
   Widget _modeStep() => Column(
         children: [
           ChoiceCard(
             icon: Icons.school,
-            title: 'Student (khud ke liye)',
+            title: 'Student (for myself)',
             subtitle:
-                'Padhai ke beech phone ki aadat kam karni hai. Settings dheeli karne par 24 ghante wait.',
+                'Cut down phone use while studying. Loosening settings takes 24 hours.',
             selected: _s.mode == LockSettings.modeStudent,
             onTap: () => setState(() => _s.mode = LockSettings.modeStudent),
           ),
           const SizedBox(height: 8),
           ChoiceCard(
             icon: Icons.family_restroom,
-            title: 'Parent (bachche ke liye)',
+            title: 'Parent (for my child)',
             subtitle:
-                'Bachche ke games aur apps par quiz. Settings sirf PIN se badlengi.',
+                'Quiz before your child\'s games and apps. Settings change only with your PIN.',
             selected: _s.mode == LockSettings.modeParent,
             onTap: () => setState(() => _s.mode = LockSettings.modeParent),
           ),
@@ -115,10 +115,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             keyboardType: TextInputType.number,
             maxLength: 4,
             decoration: InputDecoration(
-              labelText: 'PIN dobara dalo',
+              labelText: 'Enter PIN again',
               border: const OutlineInputBorder(),
               errorText: _pin2.text.length == 4 && _pin1.text != _pin2.text
-                  ? 'Dono PIN alag hain'
+                  ? 'PINs don\'t match'
                   : null,
             ),
             onChanged: (_) => _changed(),
@@ -128,14 +128,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _cautionStep() {
     final loosen = _s.isParent
-        ? 'Setup ke baad settings sirf Parent PIN se badlengi.'
-        : 'Setup ke baad lock dheela karna (app hatana, lock band karna) 24 ghante baad lagu hoga.';
+        ? 'After setup, settings can only be changed with the parent PIN.'
+        : 'After setup, loosening the lock (removing apps, turning it off) takes effect after 24 hours.';
     final points = [
       if (_s.locksScreen)
-        'Phone band karke ya restart karke bhi quiz se nahi bach sakte. Phone khulte hi quiz dena padega.'
+        'Turning the phone off or restarting it won\'t get you out of the quiz. You\'ll have to answer as soon as the phone is unlocked.'
       else
-        'Phone band karke ya restart karke bhi lock nahi hatega. Chune hue apps kholte hi quiz dena padega.',
-      'Emergency call aur aane wali call hamesha chalegi.',
+        'Turning the phone off or restarting it won\'t remove the lock. You\'ll have to answer whenever you open a locked app.',
+      'Emergency calls and incoming calls always work.',
       loosen,
     ];
     return Column(
@@ -158,17 +158,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           contentPadding: EdgeInsets.zero,
           value: _understood,
           onChanged: (v) => setState(() => _understood = v ?? false),
-          title: const Text('Main samajh gaya/gayi'),
+          title: const Text('I understand'),
         ),
         const SizedBox(height: 12),
         if (_confirmed)
           const ListTile(
             leading: Icon(Icons.check_circle, color: Colors.green),
-            title: Text('Pakka ho gaya. Aage badho.'),
+            title: Text('Confirmed. Tap Next.'),
           )
         else
           HoldButton(
-            label: 'Haan, Lock Shuru Karo (3 sec dabao)',
+            label: 'Yes, start the lock (hold 3 sec)',
             enabled: _understood,
             onDone: () => setState(() => _confirmed = true),
           ),
@@ -187,7 +187,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Ek demo quiz chala ke dekho. Jaan-boojh ke ek galat jawab bhi do, taki penalty timer bhi dikh jaye.',
+            'Run a demo quiz. Give one wrong answer on purpose to see the penalty timer too.',
             style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 16),
@@ -198,7 +198,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               setState(() => _tested = true);
             },
             icon: const Icon(Icons.play_arrow),
-            label: Text(_tested ? 'Dobara test karo' : 'Test quiz chalao'),
+            label: Text(_tested ? 'Test again' : 'Start test quiz'),
           ),
         ],
       );
@@ -265,12 +265,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     if (_index > 0)
                       TextButton(
                         onPressed: () => setState(() => _index--),
-                        child: const Text('Peeche'),
+                        child: const Text('Back'),
                       ),
                     const Spacer(),
                     FilledButton(
                       onPressed: step.canNext() ? _next : null,
-                      child: Text(last ? 'Setup complete ✅' : 'Aage'),
+                      child: Text(last ? 'Finish setup ✅' : 'Next'),
                     ),
                   ],
                 ),

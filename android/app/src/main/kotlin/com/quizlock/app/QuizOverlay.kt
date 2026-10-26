@@ -123,7 +123,7 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
         store.saveHistory(history)
         current = shown
 
-        progress.text = "Sahi jawab: $correctCount / ${settings.questionsPerUnlock}"
+        progress.text = "Correct: $correctCount / ${settings.questionsPerUnlock}"
         questionText.text = shown.q.question
         feedback.visibility = View.GONE
         options.removeAllViews()
@@ -149,9 +149,9 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
         feedback.visibility = View.VISIBLE
         if (correct) {
             correctCount++
-            progress.text = "Sahi jawab: $correctCount / ${settings.questionsPerUnlock}"
+            progress.text = "Correct: $correctCount / ${settings.questionsPerUnlock}"
             feedback.setTextColor(GREEN)
-            feedback.text = "✅ Sahi!"
+            feedback.text = "✅ Correct!"
             handler.postDelayed({
                 val r = reason ?: return@postDelayed
                 if (correctCount >= settings.questionsPerUnlock) listener.onUnlocked(r) else nextQuestion()
@@ -168,9 +168,9 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
             nextQuestion()
             return
         }
-        feedback.text = "❌ Galat. Sahi jawab: ${shown.options[shown.answer]}\n" +
+        feedback.text = "❌ Wrong. Correct answer: ${shown.options[shown.answer]}\n" +
             (if (shown.q.explanation.isNotEmpty()) "${shown.q.explanation}\n\n" else "\n") +
-            "⏳ Agla sawal $left sec mein..."
+            "⏳ Next question in $left sec..."
         handler.postDelayed({ penaltyTick(shown, left - 1) }, 1000)
     }
 
@@ -179,15 +179,15 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
     private fun updateReasonViews() {
         val r = reason ?: return
         val need = settings.questionsPerUnlock
-        val jawab = if (need == 1) "1 sahi jawab" else "$need sahi jawab"
+        val answers = if (need == 1) "1 correct answer" else "$need correct answers"
         subtitle.text = when (r) {
-            is LockReason.App -> "${appLabel(r.pkg)} kholne ke liye $jawab chahiye."
-            LockReason.Screen -> "Phone use karne ke liye $jawab chahiye."
-            LockReason.Test -> "Ye sirf test hai. Jaisa asli lock mein dikhega, waisa hi."
+            is LockReason.App -> "Answer $answers to open ${appLabel(r.pkg)}."
+            LockReason.Screen -> "Answer $answers to use your phone."
+            LockReason.Test -> "This is just a test. The real lock looks exactly like this."
         }
         val test = r == LockReason.Test
         val skipsLeft = store.skipsLeft(settings.dailySkips)
-        skipBtn.text = "Skip ($skipsLeft bacha)"
+        skipBtn.text = "Skip ($skipsLeft left today)"
         skipBtn.visibility = if (!test && skipsLeft > 0) View.VISIBLE else View.GONE
         homeBtn.visibility = if (r is LockReason.App) View.VISIBLE else View.GONE
         pinBtn.visibility = if (!test && settings.isParent) View.VISIBLE else View.GONE
@@ -198,7 +198,7 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
         val pm = ctx.packageManager
         pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
     } catch (e: Exception) {
-        "Ye app"
+        "this app"
     }
 
     private fun buildViews(): View {
@@ -206,7 +206,7 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(48), dp(20), dp(32))
         }
-        content.addView(text("🔒 Pehle jawab do", 26f, bold = true))
+        content.addView(text("🔒 Answer first", 26f, bold = true))
         subtitle = text("", 16f, color = MUTED)
         content.addView(subtitle, matchWidth(top = 6))
         progress = text("", 14f, color = ACCENT, bold = true)
@@ -223,11 +223,11 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
             reason?.let { listener.onUnlocked(it) }
         }
         content.addView(skipBtn, matchWidth(top = 28))
-        homeBtn = button("🏠 Wapas jao", CARD, Color.WHITE) {
+        homeBtn = button("🏠 Go back", CARD, Color.WHITE) {
             (reason as? LockReason.App)?.let { listener.onGoHome(it) }
         }
         content.addView(homeBtn, matchWidth(top = 10))
-        pinBtn = button("👨‍👩‍👧 Parent PIN se kholo", CARD, Color.WHITE) {
+        pinBtn = button("👨‍👩‍👧 Unlock with parent PIN", CARD, Color.WHITE) {
             pinRow.visibility = if (pinRow.visibility == View.VISIBLE) View.GONE else View.VISIBLE
         }
         content.addView(pinBtn, matchWidth(top = 10))
@@ -236,7 +236,7 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
         content.addView(button("📞 Emergency call (112)", Color.TRANSPARENT, RED, stroke = RED) {
             listener.onEmergency()
         }, matchWidth(top = 10))
-        closeBtn = button("Test band karo", ACCENT, Color.WHITE) { listener.onTestClosed() }
+        closeBtn = button("Close test", ACCENT, Color.WHITE) { listener.onTestClosed() }
         content.addView(closeBtn, matchWidth(top = 10))
 
         return object : FrameLayout(ctx) {
@@ -260,11 +260,11 @@ class QuizOverlay(private val ctx: Context, private val store: Store, private va
             orientation = LinearLayout.VERTICAL
             visibility = View.GONE
             addView(input, matchWidth())
-            addView(button("Kholo", ACCENT, Color.WHITE) {
+            addView(button("Unlock", ACCENT, Color.WHITE) {
                 if (store.checkPin(input.text.toString())) {
                     reason?.let { listener.onUnlocked(it) }
                 } else {
-                    error.text = "Galat PIN"
+                    error.text = "Wrong PIN"
                     input.text.clear()
                 }
             }, matchWidth(top = 6))

@@ -135,7 +135,7 @@ class MainActivity : FlutterActivity() {
             "admin" -> launch(Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
                 .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent())
                 .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                    "Isse bachcha bina Parent PIN ke Quiz Lock delete nahi kar payega."))
+                    "This stops your child from deleting Quiz Lock without the parent PIN."))
             "autostart" -> launch(*autostartIntents().toTypedArray(),
                 Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))
         }
@@ -169,5 +169,5 @@ class MainActivity : FlutterActivity() {
 /** Parent mode ki uninstall protection. */
 class AdminReceiver : DeviceAdminReceiver() {
     override fun onDisableRequested(context: Context, intent: Intent): CharSequence =
-        "Quiz Lock ki protection hat jayegi. Kya parent ne permission di hai?"
+        "This will remove Quiz Lock's protection. Did a parent allow this?"
 }

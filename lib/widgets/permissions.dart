@@ -12,19 +12,19 @@ class PermissionInfo {
 
 const basePermissions = [
   PermissionInfo('usage', 'Usage Access',
-      'Kaunsa app khula hai, ye pata karne ke liye.',
+      'To know which app is open.',
       required: true),
   PermissionInfo('overlay', 'Display over other apps',
-      'Quiz ko dusre apps ke upar dikhane ke liye.',
+      'To show the quiz on top of other apps.',
       required: true),
   PermissionInfo('notifications', 'Notifications',
-      'Lock chal raha hai, ye chhota notification dikhane ke liye.'),
-  PermissionInfo('battery', 'Battery optimization band',
-      'Taki phone khud se is app ko band na kare.'),
+      'To show a small notification while the lock is running.'),
+  PermissionInfo('battery', 'Battery optimization off',
+      'So the phone doesn\'t stop this app in the background.'),
 ];
 
 const adminPermission = PermissionInfo('admin', 'Uninstall protection',
-    'Taki bachcha bina parent ke app delete na kar sake.');
+    'So your child can\'t delete the app without you.');
 
 /// Permissions ki list. App par wapas aate hi status khud refresh hota hai.
 class PermissionsList extends StatefulWidget {
@@ -77,7 +77,7 @@ class _PermissionsListState extends State<PermissionsList>
       children: [
         for (final p in _items)
           _PermissionTile(
-            title: p.required ? '${p.title} (zaroori)' : p.title,
+            title: p.required ? '${p.title} (required)' : p.title,
             why: p.why,
             granted: _granted[p.key] == true,
             onTap: () => Native.openPermission(p.key),
@@ -85,7 +85,7 @@ class _PermissionsListState extends State<PermissionsList>
         _PermissionTile(
           title: 'Autostart',
           why:
-              'Xiaomi, Oppo, Vivo, Realme jaise phones par zaroori hai, warna restart ke baad lock nahi chalega. Setting mein is app ko ON karke wapas aao.',
+              'Needed on phones like Xiaomi, Oppo, Vivo and Realme, otherwise the lock stops after a restart. Turn this app ON there and come back.',
           granted: _autostartDone,
           onTap: () async {
             await Native.openPermission('autostart');

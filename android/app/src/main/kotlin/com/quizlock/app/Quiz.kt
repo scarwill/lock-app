@@ -37,7 +37,7 @@ class QuizPicker(private val bank: List<Question>, private val random: Random = 
     }
 
     fun next(pool: List<Question>, history: QuizHistory, now: Long, excludeId: String? = null): ShownQuestion {
-        require(pool.isNotEmpty()) { "Question bank khaali hai" }
+        require(pool.isNotEmpty()) { "Question bank is empty" }
         val candidates = pool.filter { it.id != excludeId }.ifEmpty { pool }
         val recentWindow = history.recent.takeLast(recentLimit(pool.size)).toSet()
 
