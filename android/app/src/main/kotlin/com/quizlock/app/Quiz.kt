@@ -1,0 +1,73 @@
+package com.quizlock.app
+
+import kotlin.random.Random
+
+data class Question(
+    val id: String,
+    val category: String,
+    val question: String,
+    val options: List<String>,
+    val answer: Int,
+    val explanation: String,
+)
+
+/** Question jiske options shuffle ho chuke hain. */
+data class ShownQuestion(val q: Question, val options: List<String>, val answer: Int)
+
+class QuizHistory(
+    /** Haal hi mein dikhe sawal, purane se naye ki taraf. */
+    val recent: MutableList<String> = mutableListOf(),
+    /** Galat kiye sawal -> kab dobara poochna hai (millis). */
+    val due: MutableMap<String, Long> = mutableMapOf(),
+)
+
+/**
+ * Agla sawal chunne ka logic. Android se alag rakha hai taki JVM test chal sake.
+ *
+ * Kram: (1) galat kiye sawal jinka time aa gaya, (2) jo haal mein nahi dikhe,
+ * (3) sabse purana dikha hua. Abhi wala sawal kabhi turant repeat nahi hota.
+ */
+class QuizPicker(private val bank: List<Question>, private val random: Random = Random.Default) {
+
+    /** Category mein bahut kam sawal hon to sab categories se lo. */
+    fun pool(category: String): List<Question> {
+        if (category == "mixed") return bank
+        val inCategory = bank.filter { it.category == category }
+        return if (inCategory.size >= MIN_POOL) inCategory else bank
+    }
+
+    fun next(pool: List<Question>, history: QuizHistory, now: Long, excludeId: String? = null): ShownQuestion {
+        require(pool.isNotEmpty()) { "Question bank khaali hai" }
+        val candidates = pool.filter { it.id != excludeId }.ifEmpty { pool }
+        val recentWindow = history.recent.takeLast(recentLimit(pool.size)).toSet()
+
+        val q = candidates.filter { (history.due[it.id] ?: Long.MAX_VALUE) <= now && it.id !in recentWindow }
+            .randomOrNull(random)
+            ?: candidates.filter { it.id !in recentWindow }.randomOrNull(random)
+            ?: history.recent.firstNotNullOfOrNull { id -> candidates.find { it.id == id } }
+            ?: candidates.random(random)
+
+        history.recent.remove(q.id)
+        history.recent.add(q.id)
+        while (history.recent.size > MAX_RECENT) history.recent.removeAt(0)
+        return shuffle(q)
+    }
+
+    fun recordAnswer(history: QuizHistory, q: Question, correct: Boolean, now: Long) {
+        if (correct) history.due.remove(q.id) else history.due[q.id] = now + REVIEW_AFTER_MS
+    }
+
+    private fun shuffle(q: Question): ShownQuestion {
+        val order = q.options.indices.shuffled(random)
+        return ShownQuestion(q, order.map { q.options[it] }, order.indexOf(q.answer))
+    }
+
+    companion object {
+        const val MIN_POOL = 5
+        const val MAX_RECENT = 200
+        const val REVIEW_AFTER_MS = 24 * 60 * 60 * 1000L
+
+        /** Pool ka aadha (max 50) haal ka maana jata hai. */
+        fun recentLimit(poolSize: Int) = (poolSize / 2).coerceIn(1, 50)
+    }
+}

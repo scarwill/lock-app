@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "note": "Sirf testing ke 5 sawal. Asli question bank baad mein yahin daalna hai, isi format mein.",
+  "questions": [
+    {
+      "id": "test-maths-1",
+      "category": "maths",
+      "level": "class-6-10",
+      "topic": "Percentage",
+      "difficulty": "easy",
+      "question": "What is 25% of 80?",
+      "options": ["15", "20", "25", "40"],
+      "answer": 1,
+      "explanation": "25% means 1/4, and 80 / 4 = 20."
+    },
+    {
+      "id": "test-maths-2",
+      "category": "maths",
+      "level": "class-6-10",
+      "topic": "Squares",
+      "difficulty": "easy",
+      "question": "What is 12 × 12?",
+      "options": ["124", "132", "144", "154"],
+      "answer": 2,
+      "explanation": "12 × 12 = 144."
+    },
+    {
+      "id": "test-science-1",
+      "category": "science",
+      "level": "class-6-10",
+      "topic": "Plants",
+      "difficulty": "easy",
+      "question": "Which gas do plants take in for photosynthesis?",
+      "options": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
+      "answer": 2,
+      "explanation": "Plants take in carbon dioxide and release oxygen during photosynthesis."
+    },
+    {
+      "id": "test-english-1",
+      "category": "english",
+      "level": "general",
+      "topic": "Vocabulary",
+      "difficulty": "easy",
+      "question": "Choose the opposite of \"ancient\".",
+      "options": ["Old", "Modern", "Historic", "Antique"],
+      "answer": 1,
+      "explanation": "Ancient means very old, so its opposite is modern."
+    },
+    {
+      "id": "test-gk-1",
+      "category": "gk",
+      "level": "general",
+      "topic": "India",
+      "difficulty": "easy",
+      "question": "What is the capital of India?",
+      "options": ["Mumbai", "Kolkata", "New Delhi", "Chennai"],
+      "answer": 2,
+      "explanation": "New Delhi is the capital of India."
+    }
+  ]
+}
