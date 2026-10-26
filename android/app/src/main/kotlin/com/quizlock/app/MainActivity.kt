@@ -100,28 +100,14 @@ class MainActivity : FlutterActivity() {
     // ---------- Permissions ----------
 
     private fun permissions(): Map<String, Boolean> = mapOf(
-        "usage" to hasUsageAccess(),
+        "usage" to hasUsageAccess(this),
         "overlay" to AndroidSettings.canDrawOverlays(this),
         "battery" to getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName),
         "notifications" to (Build.VERSION.SDK_INT < 33 ||
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED),
         "admin" to getSystemService(DevicePolicyManager::class.java).isAdminActive(adminComponent()),
+        "accessibility" to GuardService.isEnabled(this),
     )
-
-    private fun hasUsageAccess(): Boolean {
-        val ops = getSystemService(AppOpsManager::class.java)
-        val mode = if (Build.VERSION.SDK_INT >= 29) {
-            ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
-        } else {
-            @Suppress("DEPRECATION")
-            ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
-        }
-        // Kuch phones par toggle ON karne ke baad bhi mode DEFAULT rehta hai, tab permission se check karo.
-        if (mode == AppOpsManager.MODE_DEFAULT) {
-            return checkSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED
-        }
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
 
     private fun adminComponent() = ComponentName(this, AdminReceiver::class.java)
 
@@ -140,6 +126,7 @@ class MainActivity : FlutterActivity() {
                 .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent())
                 .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
                     "This stops your child from deleting Quiz Lock without the parent PIN."))
+            "accessibility" -> launch(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS))
             "appinfo" -> launch(Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))
             "autostart" -> launch(*autostartIntents().toTypedArray(),
                 Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))
@@ -171,8 +158,23 @@ class MainActivity : FlutterActivity() {
     }
 }
 
-/** Parent mode ki uninstall protection. */
+/** Device admin: active admin app seedha uninstall nahi hota. Lock band hone par Store ise hata deta hai. */
 class AdminReceiver : DeviceAdminReceiver() {
     override fun onDisableRequested(context: Context, intent: Intent): CharSequence =
-        "This will remove Quiz Lock's protection. Did a parent allow this?"
+        "This removes Quiz Lock's uninstall protection."
+}
+
+fun hasUsageAccess(context: Context): Boolean {
+    val ops = context.getSystemService(AppOpsManager::class.java)
+    val mode = if (Build.VERSION.SDK_INT >= 29) {
+        ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
+    } else {
+        @Suppress("DEPRECATION")
+        ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
+    }
+    // Kuch phones par toggle ON karne ke baad bhi mode DEFAULT rehta hai, tab permission se check karo.
+    if (mode == AppOpsManager.MODE_DEFAULT) {
+        return context.checkSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED
+    }
+    return mode == AppOpsManager.MODE_ALLOWED
 }

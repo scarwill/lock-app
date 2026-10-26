@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="guard_description">Stops Quiz Lock from being uninstalled, force stopped or having its permissions turned off while the lock is on. It only looks at Settings, the app installer and the home screen, and only acts on screens about Quiz Lock. Nothing is collected or sent anywhere.</string>
+</resources>

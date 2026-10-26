@@ -81,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final missing = [
       if (_perms['usage'] != true) 'Usage Access',
       if (_perms['overlay'] != true) 'Display over other apps',
+      if (_perms['accessibility'] != true) 'Uninstall protection',
     ];
     final on = s.enabled && missing.isEmpty;
     return Scaffold(
@@ -122,7 +123,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   subtitle: const Text('The lock will not work without it.'),
                   trailing: FilledButton(
                     onPressed: () => Native.openPermission(
-                        _perms['usage'] != true ? 'usage' : 'overlay'),
+                        _perms['usage'] != true
+                            ? 'usage'
+                            : _perms['overlay'] != true
+                                ? 'overlay'
+                                : 'accessibility'),
                     child: const Text('Fix'),
                   ),
                 ),

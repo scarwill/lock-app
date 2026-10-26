@@ -136,6 +136,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       else
         'Turning the phone off or restarting it won\'t remove the lock. You\'ll have to answer whenever you open a locked app.',
       'Emergency calls and incoming calls always work.',
+      'While the lock is on, Quiz Lock can\'t be uninstalled. To remove it, turn the lock off first.',
       loosen,
     ];
     return Column(
@@ -177,7 +178,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _permissionsStep() => PermissionsList(
-        parentMode: _s.isParent,
         onRequiredChanged: (ok) {
           if (ok != _permissionsOk) setState(() => _permissionsOk = ok);
         },

@@ -1,5 +1,7 @@
 package com.quizlock.app
 
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
@@ -50,7 +52,8 @@ data class Settings(
  * change, free time, aaj ke stats, quiz history aur Parent PIN.
  */
 class Store(context: Context) {
-    private val p = context.applicationContext.getSharedPreferences("quizlock", Context.MODE_PRIVATE)
+    private val app = context.applicationContext
+    private val p = app.getSharedPreferences("quizlock", Context.MODE_PRIVATE)
 
     private var cachedJson: String? = null
     private var cached: Settings? = null
@@ -71,7 +74,14 @@ class Store(context: Context) {
 
     /** Naya save hamesha pending change cancel karta hai. */
     fun saveSettings(json: String) {
+        val wasOn = p.getString("settings", null)?.let { Settings.parse(it).enabled } == true
         p.edit().putString("settings", json).remove("pending").remove("pending_at").apply()
+        // Lock band hua to device admin hata do, taki ab app normal tarike se uninstall ho sake.
+        if (wasOn && !Settings.parse(json).enabled) {
+            val dpm = app.getSystemService(DevicePolicyManager::class.java)
+            val admin = ComponentName(app, AdminReceiver::class.java)
+            if (dpm.isAdminActive(admin)) dpm.removeActiveAdmin(admin)
+        }
     }
 
     fun setPending(json: String, applyAt: Long) {

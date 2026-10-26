@@ -23,15 +23,18 @@ const basePermissions = [
       'So the phone doesn\'t stop this app in the background.'),
 ];
 
-const adminPermission = PermissionInfo('admin', 'Uninstall protection',
-    'So your child can\'t delete the app without you.');
+const protectionPermissions = [
+  PermissionInfo('accessibility', 'Uninstall protection',
+      'Stops Quiz Lock from being uninstalled or switched off while the lock is on. Find "Quiz Lock protection" in the list and turn it on.',
+      required: true),
+  PermissionInfo('admin', 'Extra uninstall protection',
+      'Blocks uninstalling from the home screen on some phones.'),
+];
 
 /// Permissions ki list. App par wapas aate hi status khud refresh hota hai.
 class PermissionsList extends StatefulWidget {
-  final bool parentMode;
   final ValueChanged<bool>? onRequiredChanged;
-  const PermissionsList(
-      {super.key, required this.parentMode, this.onRequiredChanged});
+  const PermissionsList({super.key, this.onRequiredChanged});
 
   @override
   State<PermissionsList> createState() => _PermissionsListState();
@@ -46,7 +49,7 @@ class _PermissionsListState extends State<PermissionsList>
   bool _autostartDone = false;
 
   List<PermissionInfo> get _items =>
-      [...basePermissions, if (widget.parentMode) adminPermission];
+      [...basePermissions, ...protectionPermissions];
 
   @override
   void initState() {
