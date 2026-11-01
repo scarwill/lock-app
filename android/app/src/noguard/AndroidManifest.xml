@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Seedhe APK (sideload) wala build: Accessibility service hata do. India mein Play
+  Protect browser/chat se aaye un APKs ka install rok deta hai jo Accessibility
+  maangte hain. Play Store build `-PwithGuard` ke saath banta hai aur isme service rehti hai.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <service android:name=".GuardService" tools:node="remove" />
+    </application>
+</manifest>

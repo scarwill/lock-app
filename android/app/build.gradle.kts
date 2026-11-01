@@ -28,6 +28,12 @@ android {
         versionName = flutter.versionName
     }
 
+    // Default: Accessibility service ke bina (seedha APK install ho sake). Play Store
+    // ke liye: flutter build appbundle --android-project-arg withGuard=true
+    if (!project.hasProperty("withGuard")) {
+        sourceSets.getByName("release").manifest.srcFile("src/noguard/AndroidManifest.xml")
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

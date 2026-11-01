@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   PendingChange? _pending;
   LockStatus? _status;
   KidsState? _kids;
+  bool _guard = false;
   Map<String, bool> _perms = {};
 
   @override
@@ -69,8 +70,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       st = await Native.status();
     }
     final perms = await Native.permissions();
+    final device = await Native.deviceInfo();
     if (!mounted) return;
     setState(() {
+      _guard = device.guard;
       _settings = s;
       _pending = p;
       _status = st;
@@ -109,7 +112,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (_perms['usage'] != true) 'Usage Access',
       if (_perms['overlay'] != true) 'Display over other apps',
       if (_perms['battery'] != true) 'Battery optimization',
-      if (s.isParent && _perms['accessibility'] != true) 'Uninstall protection',
+      if (_guard && s.isParent && _perms['accessibility'] != true)
+        'Uninstall protection',
     ];
     final on = s.enabled && missing.isEmpty && st.running;
     final exam = s.examDate;

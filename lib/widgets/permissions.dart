@@ -118,7 +118,10 @@ class _PermissionsListState extends State<PermissionsList>
 
   List<PermissionInfo> get _items => [
     ...basePermissions,
-    if (widget.settings.isParent) ...parentPermissions,
+    if (widget.settings.isParent)
+      ...parentPermissions.where(
+        (p) => p.key != 'accessibility' || (_device?.guard ?? false),
+      ),
     if (widget.settings.walkEnabled &&
         (_device?.stepSensor ?? false) &&
         (_device?.sdk ?? 0) >= 29)

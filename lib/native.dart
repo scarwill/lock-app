@@ -54,7 +54,17 @@ class DeviceInfo {
   final int sdk;
   final bool stepSensor;
   final bool fingerprint;
-  const DeviceInfo(this.brand, this.sdk, this.stepSensor, this.fingerprint);
+
+  /// Uninstall protection (Accessibility) is build mein hai? Seedhe APK mein nahi
+  /// hoti, kyunki Play Protect aise APK ka install rok deta hai.
+  final bool guard;
+  const DeviceInfo(
+    this.brand,
+    this.sdk,
+    this.stepSensor,
+    this.fingerprint, {
+    this.guard = false,
+  });
 
   /// Ye phone background mein apps zyada band karte hain.
   bool get aggressive => const {
@@ -214,6 +224,7 @@ class Native {
       m['sdk'] as int? ?? 0,
       m['stepSensor'] as bool? ?? false,
       m['fingerprint'] as bool? ?? false,
+      guard: m['guard'] as bool? ?? false,
     );
   }
 

@@ -89,6 +89,7 @@ class MainActivity : FlutterActivity() {
                     "stepSensor" to (getSystemService(SensorManager::class.java)
                         ?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null),
                     "fingerprint" to BiometricActivity.available(this),
+                    "guard" to guardInstalled(),
                 ))
                 "flags" -> result.success(store.flags())
                 "setFlag" -> {
@@ -171,6 +172,14 @@ class MainActivity : FlutterActivity() {
         "activity" to (Build.VERSION.SDK_INT < 29 ||
             checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED),
     )
+
+    /** Seedhe APK wale build mein Accessibility service hoti hi nahi (Play Protect ki wajah se). */
+    private fun guardInstalled() = try {
+        packageManager.getServiceInfo(ComponentName(this, GuardService::class.java), 0)
+        true
+    } catch (e: PackageManager.NameNotFoundException) {
+        false
+    }
 
     /** Phone ki company, battery/autostart ki sahi screen aur steps ke liye. */
     private fun brand(): String {
