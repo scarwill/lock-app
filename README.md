@@ -16,6 +16,22 @@ lock rakhta hai jab tak quiz ka sahi jawab na do. Flutter + native Kotlin.
   - `Quiz.kt`: agla sawal chunna (repeat nahi, galat sawal 24 ghante baad
     dobara, options shuffle). JVM tests: `android/app/src/test`.
   - `Store.kt`: settings, pending change, free time, stats, PIN (hash).
+- **Naye features**
+  - *Walk-to-Unlock* (`StepGate.kt`): sawal ki jagah 50/100/200 kadam, din mein 3 baar,
+    2.5 kadam/second se tez nahi gine jaate (phone hilana kaam nahi karta).
+  - *Exam countdown* (`ScreenTime.kt`): quiz ke upar "NEET mein X din bache" aur aaj locked
+    apps par kitne minute gaye.
+  - *My questions* (`lib/screens/my_questions.dart`): khud ke MCQ, free mein ek saath 25,
+    naye sawal 3 din tak pehle aate hain.
+  - *Kids Lock* (Premium, `lib/screens/kids_lock.dart`, `KidsTileService.kt`): parent ke
+    phone par chune apps PIN/fingerprint se 15/30/60 min ke liye khulte hain.
+  - *Uninstall protection* (`GuardService.kt`): sirf Parent mode aur Kids Lock mein.
+    Student jab chahe app hata sakta hai.
+  - *Lock band na ho*: battery optimization zaroori, company ke hisaab se autostart,
+    battery saver aur recents-lock ke steps, aur chowkidar (`WatchdogJob.kt`, GuardService,
+    recents se swipe par 2 sec mein restart). Home par asli status aur "phone ne lock band
+    kiya" warning.
+  - *Premium*: abhi Settings mein "Testing: Premium ON" switch; Play billing baad mein.
 - **Sawal**: `assets/questions.json`. Abhi sirf 5 test sawal hain. Naye sawal
   isi format mein daalo.
 

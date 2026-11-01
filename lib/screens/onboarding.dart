@@ -14,9 +14,13 @@ class _Step {
 
   /// Body khud scroll karti hai (jaise apps ki list).
   final bool scrolls;
-  _Step(this.title, this.body,
-      {this.subtitle, bool Function()? canNext, this.scrolls = false})
-      : canNext = canNext ?? (() => true);
+  _Step(
+    this.title,
+    this.body, {
+    this.subtitle,
+    bool Function()? canNext,
+    this.scrolls = false,
+  }) : canNext = canNext ?? (() => true);
 }
 
 /// Pehli baar app kholne par setup: mode, lock type, apps, quiz, free time,
@@ -49,82 +53,102 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _changed() => setState(() {});
 
   List<_Step> get _steps => [
-        _Step('Welcome to Quiz Lock 👋', _modeStep,
-            subtitle: 'Who are you setting this up for?'),
-        if (_s.isParent)
-          _Step('Create a parent PIN', _pinStep,
-              subtitle:
-                  'You will need this PIN to change settings and to unlock your child\'s phone.',
-              canNext: () =>
-                  _pin1.text.length == 4 && _pin1.text == _pin2.text),
-        _Step('What should be locked?', () => LockTypeSection(
-                settings: _s, onChanged: _changed)),
-        _Step('Which apps do you want to lock?',
-            () => AppPicker(selected: _s.lockedApps, onChanged: _changed),
-            subtitle: 'Pick at least 1 app.',
-            canNext: () => _s.lockedApps.isNotEmpty,
-            scrolls: true),
-        _Step('Quiz settings',
-            () => QuizSection(settings: _s, onChanged: _changed)),
-        _Step('Free time and skips',
-            () => FreeTimeSection(settings: _s, onChanged: _changed)),
-        _Step('⚠️ Read carefully', _cautionStep, canNext: () => _confirmed),
-        _Step('Permissions', _permissionsStep,
-            subtitle: 'Allow them one by one. The lock won\'t work without the required ones.',
-            canNext: () => _permissionsOk),
-        _Step('Try it out', _testStep),
-      ];
+    _Step(
+      'Welcome to Quiz Lock 👋',
+      _modeStep,
+      subtitle: 'Who are you setting this up for?',
+    ),
+    if (_s.isParent)
+      _Step(
+        'Create a parent PIN',
+        _pinStep,
+        subtitle: 'You will need this PIN to change settings and to unlock your child\'s phone.',
+        canNext: () => _pin1.text.length == 4 && _pin1.text == _pin2.text,
+      ),
+    _Step(
+      'What should be locked?',
+      () => LockTypeSection(settings: _s, onChanged: _changed),
+    ),
+    _Step(
+      'Which apps do you want to lock?',
+      () => AppPicker(selected: _s.lockedApps, onChanged: _changed),
+      subtitle: 'Pick at least 1 app.',
+      canNext: () => _s.lockedApps.isNotEmpty,
+      scrolls: true,
+    ),
+    _Step(
+      'Quiz settings',
+      () => Column(
+        children: [
+          QuizSection(settings: _s, onChanged: _changed),
+          WalkSection(settings: _s, onChanged: _changed),
+        ],
+      ),
+    ),
+    _Step(
+      'Free time and skips',
+      () => FreeTimeSection(settings: _s, onChanged: _changed),
+    ),
+    _Step('⚠️ Read carefully', _cautionStep, canNext: () => _confirmed),
+    _Step(
+      'Permissions',
+      _permissionsStep,
+      subtitle: 'Allow them one by one. The lock won\'t work without the required ones.',
+      canNext: () => _permissionsOk,
+    ),
+    _Step('Try it out', _testStep),
+  ];
 
   Widget _modeStep() => Column(
-        children: [
-          ChoiceCard(
-            icon: Icons.school,
-            title: 'Student (for myself)',
-            subtitle:
-                'Cut down phone use while studying. Loosening settings takes 24 hours.',
-            selected: _s.mode == LockSettings.modeStudent,
-            onTap: () => setState(() => _s.mode = LockSettings.modeStudent),
-          ),
-          const SizedBox(height: 8),
-          ChoiceCard(
-            icon: Icons.family_restroom,
-            title: 'Parent (for my child)',
-            subtitle:
-                'Quiz before your child\'s games and apps. Settings change only with your PIN.',
-            selected: _s.mode == LockSettings.modeParent,
-            onTap: () => setState(() => _s.mode = LockSettings.modeParent),
-          ),
-        ],
-      );
+    children: [
+      ChoiceCard(
+        icon: Icons.school,
+        title: 'Student (for myself)',
+        subtitle: 'Cut down phone use while studying. Loosening settings takes 24 hours.',
+        selected: _s.mode == LockSettings.modeStudent,
+        onTap: () => setState(() => _s.mode = LockSettings.modeStudent),
+      ),
+      const SizedBox(height: 8),
+      ChoiceCard(
+        icon: Icons.family_restroom,
+        title: 'Parent (for my child)',
+        subtitle: 'Quiz before your child\'s games and apps. Settings change only with your PIN.',
+        selected: _s.mode == LockSettings.modeParent,
+        onTap: () => setState(() => _s.mode = LockSettings.modeParent),
+      ),
+    ],
+  );
 
   Widget _pinStep() => Column(
-        children: [
-          TextField(
-            controller: _pin1,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            maxLength: 4,
-            decoration: const InputDecoration(
-                labelText: '4 digit PIN', border: OutlineInputBorder()),
-            onChanged: (_) => _changed(),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _pin2,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            maxLength: 4,
-            decoration: InputDecoration(
-              labelText: 'Enter PIN again',
-              border: const OutlineInputBorder(),
-              errorText: _pin2.text.length == 4 && _pin1.text != _pin2.text
-                  ? 'PINs don\'t match'
-                  : null,
-            ),
-            onChanged: (_) => _changed(),
-          ),
-        ],
-      );
+    children: [
+      TextField(
+        controller: _pin1,
+        obscureText: true,
+        keyboardType: TextInputType.number,
+        maxLength: 4,
+        decoration: const InputDecoration(
+          labelText: '4 digit PIN',
+          border: OutlineInputBorder(),
+        ),
+        onChanged: (_) => _changed(),
+      ),
+      const SizedBox(height: 8),
+      TextField(
+        controller: _pin2,
+        obscureText: true,
+        keyboardType: TextInputType.number,
+        maxLength: 4,
+        decoration: InputDecoration(
+          labelText: 'Enter PIN again',
+          border: const OutlineInputBorder(),
+          errorText: _pin2.text.length == 4 && _pin1.text != _pin2.text
+              ? 'PINs don\'t match'
+              : null,
+        ),
+        onChanged: (_) => _changed(),
+      ),
+    ],
+  );
 
   Widget _cautionStep() {
     final loosen = _s.isParent
@@ -136,7 +160,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       else
         'Turning the phone off or restarting it won\'t remove the lock. You\'ll have to answer whenever you open a locked app.',
       'Emergency calls and incoming calls always work.',
-      'While the lock is on, Quiz Lock can\'t be uninstalled. To remove it, turn the lock off first.',
+      if (_s.isParent) 'While the lock is on, Quiz Lock can\'t be uninstalled or switched off without your PIN.',
       loosen,
     ];
     return Column(
@@ -150,8 +174,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 const Text('•  ', style: TextStyle(fontSize: 18)),
                 Expanded(
-                    child: Text(p,
-                        style: Theme.of(context).textTheme.titleMedium)),
+                  child: Text(
+                    p,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
               ],
             ),
           ),
@@ -178,30 +205,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _permissionsStep() => PermissionsList(
-        onRequiredChanged: (ok) {
-          if (ok != _permissionsOk) setState(() => _permissionsOk = ok);
-        },
-      );
+    settings: _s,
+    onRequiredChanged: (ok) {
+      if (ok != _permissionsOk) setState(() => _permissionsOk = ok);
+    },
+  );
 
   Widget _testStep() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Run a demo quiz. Give one wrong answer on purpose to see the penalty timer too.',
-            style: TextStyle(fontSize: 16),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () async {
-              await Native.saveSettings(_s);
-              await Native.testQuiz();
-              setState(() => _tested = true);
-            },
-            icon: const Icon(Icons.play_arrow),
-            label: Text(_tested ? 'Test again' : 'Start test quiz'),
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Run a demo quiz. Give one wrong answer on purpose to see the penalty timer too.',
+        style: TextStyle(fontSize: 16),
+      ),
+      const SizedBox(height: 16),
+      OutlinedButton.icon(
+        onPressed: () async {
+          await Native.saveSettings(_s);
+          await Native.testQuiz();
+          setState(() => _tested = true);
+        },
+        icon: const Icon(Icons.play_arrow),
+        label: Text(_tested ? 'Test again' : 'Start test quiz'),
+      ),
+    ],
+  );
 
   Future<void> _next() async {
     final steps = _steps;
@@ -216,8 +244,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await Native.saveSettings(_s);
     await Native.startLock();
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()));
+    Navigator.of(context)
+        .pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
   }
 
   @override

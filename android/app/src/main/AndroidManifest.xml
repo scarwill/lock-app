@@ -12,6 +12,10 @@
     <!-- Restart ke baad lock dobara chalu karne ke liye -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Walk-to-Unlock: phone ke step sensor se kadam ginna -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- Kids Lock: parent ka fingerprint -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
         android:label="Quiz Lock"
@@ -61,6 +65,32 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/guard_service" />
         </service>
+
+        <!-- Chowkidar: lock service mar jaye to har ~15 minute mein wapas chalu -->
+        <service
+            android:name=".WatchdogJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- Notification bar ka "Kids Lock" tile -->
+        <service
+            android:name=".KidsTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_kids_tile"
+            android:label="Kids Lock"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".BiometricActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Material.NoActionBar" />
 
         <receiver
             android:name=".BootReceiver"

@@ -19,6 +19,14 @@ class LockSettings {
   int cooldownMinutes;
   int dailySkips;
 
+  /// Walk-to-Unlock: sawal ki jagah itne kadam chalo (din mein 3 baar).
+  bool walkEnabled;
+  int walkSteps;
+
+  /// Exam countdown (quiz ke upar). Khaali naam = band.
+  String examName;
+  DateTime? examDate;
+
   LockSettings({
     this.onboarded = false,
     this.enabled = false,
@@ -30,7 +38,13 @@ class LockSettings {
     this.penaltySeconds = 15,
     this.cooldownMinutes = 30,
     this.dailySkips = 1,
+    this.walkEnabled = true,
+    this.walkSteps = 100,
+    this.examName = '',
+    this.examDate,
   }) : lockedApps = lockedApps ?? [];
+
+  static const walksPerDay = 3;
 
   bool get isParent => mode == modeParent;
   bool get locksScreen => lockType == lockAppsAndScreen;
@@ -38,30 +52,40 @@ class LockSettings {
   LockSettings copy() => LockSettings.fromJson(toJson());
 
   Map<String, dynamic> toJson() => {
-        'onboarded': onboarded,
-        'enabled': enabled,
-        'mode': mode,
-        'lockType': lockType,
-        'lockedApps': lockedApps,
-        'category': category,
-        'questionsPerUnlock': questionsPerUnlock,
-        'penaltySeconds': penaltySeconds,
-        'cooldownMinutes': cooldownMinutes,
-        'dailySkips': dailySkips,
-      };
+    'onboarded': onboarded,
+    'enabled': enabled,
+    'mode': mode,
+    'lockType': lockType,
+    'lockedApps': lockedApps,
+    'category': category,
+    'questionsPerUnlock': questionsPerUnlock,
+    'penaltySeconds': penaltySeconds,
+    'cooldownMinutes': cooldownMinutes,
+    'dailySkips': dailySkips,
+    'walkEnabled': walkEnabled,
+    'walkSteps': walkSteps,
+    'examName': examName,
+    'examDate': examDate?.millisecondsSinceEpoch ?? 0,
+  };
 
   factory LockSettings.fromJson(Map<String, dynamic> j) => LockSettings(
-        onboarded: j['onboarded'] as bool? ?? false,
-        enabled: j['enabled'] as bool? ?? false,
-        mode: j['mode'] as String? ?? modeStudent,
-        lockType: j['lockType'] as String? ?? lockApps,
-        lockedApps: (j['lockedApps'] as List?)?.cast<String>().toList() ?? [],
-        category: j['category'] as String? ?? 'mixed',
-        questionsPerUnlock: j['questionsPerUnlock'] as int? ?? 1,
-        penaltySeconds: j['penaltySeconds'] as int? ?? 15,
-        cooldownMinutes: j['cooldownMinutes'] as int? ?? 30,
-        dailySkips: j['dailySkips'] as int? ?? 1,
-      );
+    onboarded: j['onboarded'] as bool? ?? false,
+    enabled: j['enabled'] as bool? ?? false,
+    mode: j['mode'] as String? ?? modeStudent,
+    lockType: j['lockType'] as String? ?? lockApps,
+    lockedApps: (j['lockedApps'] as List?)?.cast<String>().toList() ?? [],
+    category: j['category'] as String? ?? 'mixed',
+    questionsPerUnlock: j['questionsPerUnlock'] as int? ?? 1,
+    penaltySeconds: j['penaltySeconds'] as int? ?? 15,
+    cooldownMinutes: j['cooldownMinutes'] as int? ?? 30,
+    dailySkips: j['dailySkips'] as int? ?? 1,
+    walkEnabled: j['walkEnabled'] as bool? ?? true,
+    walkSteps: j['walkSteps'] as int? ?? 100,
+    examName: j['examName'] as String? ?? '',
+    examDate: (j['examDate'] as int? ?? 0) > 0
+        ? DateTime.fromMillisecondsSinceEpoch(j['examDate'] as int)
+        : null,
+  );
 
   String toJsonString() => jsonEncode(toJson());
   factory LockSettings.fromJsonString(String s) =>
@@ -74,11 +98,19 @@ class LockSettings {
     if (old.enabled && !enabled) reasons.add('Turning the lock off');
     final removed = old.lockedApps.where((p) => !lockedApps.contains(p));
     if (removed.isNotEmpty) reasons.add('Unlocking ${removed.length} app(s)');
-    if (old.locksScreen && !locksScreen) reasons.add('Removing the lock screen quiz');
-    if (questionsPerUnlock < old.questionsPerUnlock) reasons.add('Fewer questions');
+    if (old.locksScreen && !locksScreen) {
+      reasons.add('Removing the lock screen quiz');
+    }
+    if (questionsPerUnlock < old.questionsPerUnlock) {
+      reasons.add('Fewer questions');
+    }
     if (penaltySeconds < old.penaltySeconds) reasons.add('Shorter penalty');
     if (cooldownMinutes > old.cooldownMinutes) reasons.add('Longer free time');
     if (dailySkips > old.dailySkips) reasons.add('More skips');
+    if (walkEnabled && !old.walkEnabled) reasons.add('Allowing walk to unlock');
+    if (walkEnabled && old.walkEnabled && walkSteps < old.walkSteps) {
+      reasons.add('Fewer steps');
+    }
     return reasons;
   }
 }

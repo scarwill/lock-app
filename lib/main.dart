@@ -17,9 +17,11 @@ class QuizLockApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ThemeData theme(Brightness b) => ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF6366F1), brightness: b),
-        );
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF6366F1),
+        brightness: b,
+      ),
+    );
     return MaterialApp(
       title: 'Quiz Lock',
       debugShowCheckedModeBanner: false,

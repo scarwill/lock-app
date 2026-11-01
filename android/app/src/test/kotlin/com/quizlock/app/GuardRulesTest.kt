@@ -30,4 +30,12 @@ class GuardRulesTest {
         assertTrue(GuardRules.isWatched("com.miui.home", setOf("com.miui.home")))
         assertFalse(GuardRules.isWatched("com.instagram.android", setOf("com.miui.home")))
     }
+
+    @Test
+    fun onlyParentModeOrKidsLockIsProtected() {
+        assertFalse(GuardRules.protects(lockOn = true, parentMode = false, kidsModeOn = false))
+        assertTrue(GuardRules.protects(lockOn = true, parentMode = true, kidsModeOn = false))
+        assertFalse(GuardRules.protects(lockOn = false, parentMode = true, kidsModeOn = false))
+        assertTrue(GuardRules.protects(lockOn = false, parentMode = false, kidsModeOn = true))
+    }
 }

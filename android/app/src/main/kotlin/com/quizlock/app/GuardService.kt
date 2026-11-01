@@ -9,9 +9,15 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
 
 /**
- * Uninstall protection. Jab lock chalu ho, to Quiz Lock ko uninstall, force
- * stop ya uski permissions band karne wali screens khulte hi Home par bhej deta
- * hai. Lock band karne ke baad (Student: 24 ghante, Parent: PIN) ye rukta hai.
+ * Uninstall protection, sirf Parent mode (aur Kids Lock) mein. Quiz Lock ko
+ * uninstall, force stop ya uski permissions band karne wali screens khulte hi
+ * Home par bhej deta hai. Lock band karne ke liye Parent PIN chahiye, uske baad
+ * ye rukta hai. Student mode mein kuch block nahi karta (student jab chahe app
+ * hata sakta hai).
+ *
+ * Saath mein do kaam aur: kisi bhi app ke khulte hi LockService ko turant
+ * check karne ko bolta hai (lock jaldi aata hai), aur LockService phone ne
+ * maar di ho to use wapas chalu karta hai.
  */
 class GuardService : AccessibilityService() {
 
@@ -19,6 +25,7 @@ class GuardService : AccessibilityService() {
     private lateinit var appLabel: String
     private var launchers = emptySet<String>()
     private var lastBlock = 0L
+    private var lastRevive = 0L
 
     override fun onServiceConnected() {
         store = Store(this)
@@ -30,9 +37,12 @@ class GuardService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val pkg = event.packageName?.toString() ?: return
+        val now = System.currentTimeMillis()
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            if (LockService.isRunning) LockService.poke() else revive(now)
+        }
         if (pkg == packageName || !GuardRules.isWatched(pkg, launchers)) return
         if (!protectionActive()) return
-        val now = System.currentTimeMillis()
         if (now - lastBlock < 1_000) return
 
         val root = rootInActiveWindow ?: return
@@ -50,10 +60,22 @@ class GuardService : AccessibilityService() {
 
     override fun onInterrupt() {}
 
-    /** Lock chalu hai aur sach mein kaam kar raha hai. Permission hi missing ho to settings kholne do, taki theek ho sake. */
+    /** Phone ne LockService maar di ho to wapas chalu karo (10 second mein ek baar se zyada nahi). */
+    private fun revive(now: Long) {
+        if (now - lastRevive < 10_000 || !store.shouldRun()) return
+        lastRevive = now
+        try {
+            LockService.start(this)
+        } catch (e: Exception) {
+            // Kuch phones background se service shuru nahi karne dete; agli baar phir koshish.
+        }
+    }
+
+    /** Parent lock ya Kids Lock chalu hai aur sach mein kaam kar raha hai. Permission hi missing ho to settings kholne do, taki theek ho sake. */
     private fun protectionActive(): Boolean {
-        val s = store.settings() ?: return false
-        return s.enabled && hasUsageAccess(this) && AndroidSettings.canDrawOverlays(this)
+        val s = store.settings()
+        if (!GuardRules.protects(s?.enabled == true, s?.isParent == true, store.kidsModeOn)) return false
+        return hasUsageAccess(this) && AndroidSettings.canDrawOverlays(this)
     }
 
     private fun collectText(root: AccessibilityNodeInfo): List<String> {
@@ -99,6 +121,10 @@ object GuardRules {
         "display over", "appear on top", "draw over",
         "clear storage", "clear data", "autostart", "auto-start", "auto start",
     )
+
+    /** Student mode mein koi protection nahi: student jab chahe app hata sake. */
+    fun protects(lockOn: Boolean, parentMode: Boolean, kidsModeOn: Boolean) =
+        (lockOn && parentMode) || kidsModeOn
 
     fun isWatched(pkg: String, launchers: Set<String>) =
         pkg in systemPackages || pkg in launchers || packageHints.any { pkg.contains(it) }

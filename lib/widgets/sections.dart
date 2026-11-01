@@ -29,7 +29,9 @@ class ChoiceCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-            color: selected ? scheme.primary : Colors.transparent, width: 2),
+          color: selected ? scheme.primary : Colors.transparent,
+          width: 2,
+        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -46,8 +48,10 @@ class ChoiceCard extends StatelessWidget {
                   children: [
                     Text(title, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
-                    Text(subtitle,
-                        style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -114,8 +118,11 @@ class OptionRow extends StatelessWidget {
 class LockTypeSection extends StatelessWidget {
   final LockSettings settings;
   final VoidCallback onChanged;
-  const LockTypeSection(
-      {super.key, required this.settings, required this.onChanged});
+  const LockTypeSection({
+    super.key,
+    required this.settings,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -124,8 +131,7 @@ class LockTypeSection extends StatelessWidget {
         ChoiceCard(
           icon: Icons.apps,
           title: 'Apps only',
-          subtitle:
-              'The quiz appears only when you open the apps you choose. Best to start with.',
+          subtitle: 'The quiz appears only when you open the apps you choose. Best to start with.',
           selected: settings.lockType == LockSettings.lockApps,
           onTap: () {
             settings.lockType = LockSettings.lockApps;
@@ -136,8 +142,7 @@ class LockTypeSection extends StatelessWidget {
         ChoiceCard(
           icon: Icons.screen_lock_portrait,
           title: 'Apps + Lock Screen',
-          subtitle:
-              'The quiz appears every time you unlock the phone, and your chosen apps stay locked too. Strictest.',
+          subtitle: 'The quiz appears every time you unlock the phone, and your chosen apps stay locked too. Strictest.',
           selected: settings.lockType == LockSettings.lockAppsAndScreen,
           onTap: () {
             settings.lockType = LockSettings.lockAppsAndScreen;
@@ -152,8 +157,11 @@ class LockTypeSection extends StatelessWidget {
 class QuizSection extends StatelessWidget {
   final LockSettings settings;
   final VoidCallback onChanged;
-  const QuizSection(
-      {super.key, required this.settings, required this.onChanged});
+  const QuizSection({
+    super.key,
+    required this.settings,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -207,8 +215,11 @@ class QuizSection extends StatelessWidget {
 class FreeTimeSection extends StatelessWidget {
   final LockSettings settings;
   final VoidCallback onChanged;
-  const FreeTimeSection(
-      {super.key, required this.settings, required this.onChanged});
+  const FreeTimeSection({
+    super.key,
+    required this.settings,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -241,6 +252,161 @@ class FreeTimeSection extends StatelessWidget {
   }
 }
 
+/// Walk-to-Unlock: sawal ki jagah kadam (din mein 3 baar).
+class WalkSection extends StatelessWidget {
+  final LockSettings settings;
+  final VoidCallback onChanged;
+  const WalkSection({
+    super.key,
+    required this.settings,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('🚶 Walk to unlock'),
+          subtitle: Text(
+            'Tired of questions? Walk instead. Up to ${LockSettings.walksPerDay} times a day.',
+          ),
+          value: settings.walkEnabled,
+          onChanged: (v) {
+            settings.walkEnabled = v;
+            onChanged();
+          },
+        ),
+        if (settings.walkEnabled)
+          OptionRow(
+            label: 'Steps needed',
+            values: const [50, 100, 200],
+            value: settings.walkSteps,
+            format: (v) => '$v',
+            onChanged: (v) {
+              settings.walkSteps = v;
+              onChanged();
+            },
+          ),
+      ],
+    );
+  }
+}
+
+/// Exam countdown: quiz ke upar "NEET mein X din bache".
+class ExamSection extends StatefulWidget {
+  final LockSettings settings;
+  final VoidCallback onChanged;
+  const ExamSection({
+    super.key,
+    required this.settings,
+    required this.onChanged,
+  });
+
+  @override
+  State<ExamSection> createState() => _ExamSectionState();
+}
+
+class _ExamSectionState extends State<ExamSection> {
+  late final _name = TextEditingController(text: widget.settings.examName);
+
+  static const _suggestions = ['NEET', 'JEE Main', 'CBSE Boards', 'CUET'];
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _setName(String v) {
+    widget.settings.examName = v;
+    widget.onChanged();
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final d = await showDatePicker(
+      context: context,
+      initialDate:
+          widget.settings.examDate ?? now.add(const Duration(days: 90)),
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: DateTime(now.year + 5),
+      helpText: 'Exam date',
+    );
+    if (d == null) return;
+    setState(() => widget.settings.examDate = d);
+    widget.onChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.settings;
+    final date = s.examDate;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Shown big on top of every quiz, with how long you used locked apps today.',
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _name,
+          decoration: const InputDecoration(
+            labelText: 'Exam name (e.g. NEET 2027)',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: _setName,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final n in _suggestions)
+              ActionChip(
+                label: Text(n),
+                onPressed: () {
+                  final year = (date ?? DateTime.now()).year;
+                  _name.text = '$n $year';
+                  _setName(_name.text);
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _pickDate,
+                icon: const Icon(Icons.event),
+                label: Text(
+                  date == null
+                      ? 'Pick exam date'
+                      : '${date.day}/${date.month}/${date.year}',
+                ),
+              ),
+            ),
+            if (date != null || s.examName.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    s.examDate = null;
+                    s.examName = '';
+                    _name.clear();
+                  });
+                  widget.onChanged();
+                },
+                child: const Text('Remove'),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 /// Ye packages installed hon to list mein upar "Suggested" mein dikhte hain,
 /// par pehle se tick nahi hote.
 const suggestedPackages = {
@@ -262,7 +428,15 @@ const suggestedPackages = {
 class AppPicker extends StatefulWidget {
   final List<String> selected;
   final VoidCallback onChanged;
-  const AppPicker({super.key, required this.selected, required this.onChanged});
+
+  /// Kids Lock: upar "Games" dikhao aur pehli baar games pehle se tick karo.
+  final bool gamesFirst;
+  const AppPicker({
+    super.key,
+    required this.selected,
+    required this.onChanged,
+    this.gamesFirst = false,
+  });
 
   @override
   State<AppPicker> createState() => _AppPickerState();
@@ -277,7 +451,14 @@ class _AppPickerState extends State<AppPicker> {
     super.initState();
     Native.installedApps().then((apps) {
       apps.sort(
-          (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+        (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
+      );
+      if (widget.gamesFirst && widget.selected.isEmpty) {
+        widget.selected.addAll(
+          apps.where((a) => a.isGame).map((a) => a.package),
+        );
+        widget.onChanged();
+      }
       if (mounted) setState(() => _apps = apps);
     });
   }
@@ -290,23 +471,29 @@ class _AppPickerState extends State<AppPicker> {
   }
 
   Widget _tile(InstalledApp a) => CheckboxListTile(
-        value: widget.selected.contains(a.package),
-        onChanged: (_) => _toggle(a.package),
-        secondary: a.icon != null
-            ? Image.memory(a.icon!, width: 40, height: 40)
-            : const Icon(Icons.android, size: 40),
-        title: Text(a.label),
-      );
+    value: widget.selected.contains(a.package),
+    onChanged: (_) => _toggle(a.package),
+    secondary: a.icon != null
+        ? Image.memory(a.icon!, width: 40, height: 40)
+        : const Icon(Icons.android, size: 40),
+    title: Text(a.label),
+  );
 
   @override
   Widget build(BuildContext context) {
     final apps = _apps;
     if (apps == null) return const Center(child: CircularProgressIndicator());
     final q = _query.toLowerCase();
-    final filtered =
-        apps.where((a) => a.label.toLowerCase().contains(q)).toList();
-    final suggested =
-        filtered.where((a) => suggestedPackages.contains(a.package)).toList();
+    final filtered = apps
+        .where((a) => a.label.toLowerCase().contains(q))
+        .toList();
+    final suggested = filtered
+        .where(
+          (a) => widget.gamesFirst
+              ? a.isGame
+              : suggestedPackages.contains(a.package),
+        )
+        .toList();
     final style = Theme.of(context).textTheme.labelLarge;
     return Column(
       children: [
@@ -335,7 +522,10 @@ class _AppPickerState extends State<AppPicker> {
               if (suggested.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Text('Suggested', style: style),
+                  child: Text(
+                    widget.gamesFirst ? 'Games' : 'Suggested',
+                    style: style,
+                  ),
                 ),
                 ...suggested.map(_tile),
                 const Divider(),
@@ -358,11 +548,12 @@ class HoldButton extends StatefulWidget {
   final String label;
   final bool enabled;
   final VoidCallback onDone;
-  const HoldButton(
-      {super.key,
-      required this.label,
-      required this.enabled,
-      required this.onDone});
+  const HoldButton({
+    super.key,
+    required this.label,
+    required this.enabled,
+    required this.onDone,
+  });
 
   @override
   State<HoldButton> createState() => _HoldButtonState();
@@ -450,8 +641,9 @@ Future<bool> askPin(BuildContext context) async {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () async {
               if (await Native.checkPin(ctrl.text)) {

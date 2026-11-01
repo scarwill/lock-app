@@ -10,6 +10,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.content.pm.ApplicationInfo
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
@@ -25,6 +28,23 @@ import java.io.ByteArrayOutputStream
 class MainActivity : FlutterActivity() {
 
     private val store by lazy { Store(this) }
+
+    /** Notification tile se aaye to Flutter ko kaunsi screen kholni hai. */
+    private var openRequest: String? = null
+
+    companion object {
+        const val EXTRA_OPEN = "open"
+    }
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        openRequest = intent?.getStringExtra(EXTRA_OPEN)
+        super.onCreate(savedInstanceState)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.getStringExtra(EXTRA_OPEN)?.let { openRequest = it }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -56,9 +76,45 @@ class MainActivity : FlutterActivity() {
                         "todayCorrect" to store.todayCorrect(),
                         "todayWrong" to store.todayWrong(),
                         "skipsLeft" to store.skipsLeft(s?.dailySkips ?: 0),
-                        "running" to (s?.enabled == true),
+                        "walksLeft" to store.walksLeft(),
+                        "running" to LockService.isRunning,
+                        "kills" to store.recentKills(),
+                        "hasPin" to store.hasPin(),
                     ))
                 }
+                "clearKills" -> { store.clearKills(); result.success(null) }
+                "deviceInfo" -> result.success(mapOf(
+                    "brand" to brand(),
+                    "sdk" to Build.VERSION.SDK_INT,
+                    "stepSensor" to (getSystemService(SensorManager::class.java)
+                        ?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null),
+                    "fingerprint" to BiometricActivity.available(this),
+                ))
+                "flags" -> result.success(store.flags())
+                "setFlag" -> {
+                    store.setFlag(call.argument<String>("name")!!, call.argument<Boolean>("value")!!)
+                    result.success(null)
+                }
+                "getMyQuestions" -> result.success(store.myQuestionsJson())
+                "saveMyQuestions" -> { store.saveMyQuestions(call.arguments as String); result.success(null) }
+                "getPremium" -> result.success(store.premium)
+                "setPremium" -> { store.premium = call.arguments as Boolean; result.success(null) }
+                "getKids" -> result.success(mapOf(
+                    "apps" to store.kidsApps.toList(),
+                    "on" to store.kidsModeOn,
+                    "freeUntil" to store.kidsFreeUntil,
+                ))
+                "setKidsApps" -> {
+                    store.kidsApps = (call.arguments as List<*>).map { it as String }.toSet()
+                    result.success(null)
+                }
+                "setKidsMode" -> {
+                    val on = call.arguments as Boolean
+                    store.kidsModeOn = on
+                    if (on) LockService.start(this) else LockService.stop(this)
+                    result.success(null)
+                }
+                "takeOpenRequest" -> { result.success(openRequest); openRequest = null }
                 else -> result.notImplemented()
             }
         }
@@ -83,9 +139,14 @@ class MainActivity : FlutterActivity() {
                     "package" to ri.activityInfo.packageName,
                     "label" to ri.loadLabel(pm).toString(),
                     "icon" to iconPng(ri.loadIcon(pm)),
+                    "isGame" to isGame(ri.activityInfo.applicationInfo),
                 )
             }
     }
+
+    @Suppress("DEPRECATION")
+    private fun isGame(info: ApplicationInfo) =
+        info.category == ApplicationInfo.CATEGORY_GAME || (info.flags and ApplicationInfo.FLAG_IS_GAME) != 0
 
     private fun iconPng(d: android.graphics.drawable.Drawable): ByteArray? = try {
         val size = 96
@@ -107,7 +168,46 @@ class MainActivity : FlutterActivity() {
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED),
         "admin" to getSystemService(DevicePolicyManager::class.java).isAdminActive(adminComponent()),
         "accessibility" to GuardService.isEnabled(this),
+        "activity" to (Build.VERSION.SDK_INT < 29 ||
+            checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED),
     )
+
+    /** Phone ki company, battery/autostart ki sahi screen aur steps ke liye. */
+    private fun brand(): String {
+        val m = (Build.MANUFACTURER + " " + Build.BRAND).lowercase()
+        return listOf(
+            "xiaomi" to listOf("xiaomi", "redmi", "poco"),
+            "realme" to listOf("realme"),
+            "oneplus" to listOf("oneplus"),
+            "oppo" to listOf("oppo"),
+            "vivo" to listOf("vivo", "iqoo"),
+            "samsung" to listOf("samsung"),
+            "huawei" to listOf("huawei", "honor"),
+            "asus" to listOf("asus"),
+        ).firstOrNull { (_, keys) -> keys.any { m.contains(it) } }?.first ?: "other"
+    }
+
+    /** Company ki apni battery saver screen (Android wale "battery optimization" se alag). */
+    private fun batteryIntents(): List<Intent> {
+        fun c(pkg: String, cls: String) = Intent().setComponent(ComponentName(pkg, cls))
+        return when (brand()) {
+            "xiaomi" -> listOf(
+                c("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity")
+                    .putExtra("package_name", packageName).putExtra("package_label", "Quiz Lock"),
+            )
+            "oppo", "realme", "oneplus" -> listOf(
+                c("com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity"),
+                c("com.oplus.battery", "com.oplus.powermanager.fuelgaue.PowerUsageModelActivity"),
+            )
+            "vivo" -> listOf(
+                c("com.vivo.abe", "com.vivo.applicationbehaviorengine.ui.ExcessivePowerManagerActivity"),
+                c("com.iqoo.powersaving", "com.iqoo.powersaving.PowerSavingManagerActivity"),
+            )
+            "samsung" -> listOf(c("com.samsung.android.lool", "com.samsung.android.sm.battery.ui.BatteryActivity"))
+            "huawei" -> listOf(c("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"))
+            else -> emptyList()
+        }
+    }
 
     private fun adminComponent() = ComponentName(this, AdminReceiver::class.java)
 
@@ -127,6 +227,11 @@ class MainActivity : FlutterActivity() {
                 .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
                     "This stops your child from deleting Quiz Lock without the parent PIN."))
             "accessibility" -> launch(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS))
+            "activity" -> if (Build.VERSION.SDK_INT >= 29) {
+                requestPermissions(arrayOf(Manifest.permission.ACTIVITY_RECOGNITION), 2)
+            }
+            "battery_brand" -> launch(*batteryIntents().toTypedArray(),
+                Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))
             "appinfo" -> launch(Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))
             "autostart" -> launch(*autostartIntents().toTypedArray(),
                 Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))

@@ -9,6 +9,10 @@ data class Question(
     val options: List<String>,
     val answer: Int,
     val explanation: String,
+    /** User ne khud banaya (My questions). */
+    val mine: Boolean = false,
+    /** Apne sawal kab jode gaye (millis); naye sawal 3 din tak pehle aate hain. */
+    val addedAt: Long = 0,
 )
 
 /** Question jiske options shuffle ho chuke hain. */
@@ -26,14 +30,23 @@ class QuizHistory(
  *
  * Kram: (1) galat kiye sawal jinka time aa gaya, (2) jo haal mein nahi dikhe,
  * (3) sabse purana dikha hua. Abhi wala sawal kabhi turant repeat nahi hota.
+ *
+ * User ke apne sawal: jode jaane ke 3 din tak sirf wahi aate hain (kal ka test),
+ * uske baad har subject ke sawalon mein mil jaate hain.
  */
-class QuizPicker(private val bank: List<Question>, private val random: Random = Random.Default) {
+class QuizPicker(
+    private val bank: List<Question>,
+    private val mine: List<Question> = emptyList(),
+    private val random: Random = Random.Default,
+) {
 
     /** Category mein bahut kam sawal hon to sab categories se lo. */
-    fun pool(category: String): List<Question> {
-        if (category == "mixed") return bank
-        val inCategory = bank.filter { it.category == category }
-        return if (inCategory.size >= MIN_POOL) inCategory else bank
+    fun pool(category: String, now: Long = System.currentTimeMillis()): List<Question> {
+        val fresh = mine.filter { now - it.addedAt < FRESH_MS }
+        if (fresh.isNotEmpty()) return fresh
+        val base = if (category == "mixed") bank else bank.filter { it.category == category }
+            .let { if (it.size >= MIN_POOL) it else bank }
+        return base + mine
     }
 
     fun next(pool: List<Question>, history: QuizHistory, now: Long, excludeId: String? = null): ShownQuestion {
@@ -66,6 +79,7 @@ class QuizPicker(private val bank: List<Question>, private val random: Random = 
         const val MIN_POOL = 5
         const val MAX_RECENT = 200
         const val REVIEW_AFTER_MS = 24 * 60 * 60 * 1000L
+        const val FRESH_MS = 3 * 24 * 60 * 60 * 1000L
 
         /** Pool ka aadha (max 50) haal ka maana jata hai. */
         fun recentLimit(poolSize: Int) = (poolSize / 2).coerceIn(1, 50)

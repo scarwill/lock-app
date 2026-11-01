@@ -10,7 +10,7 @@ class QuizPickerTest {
     private val bank = (1..5).map {
         Question("q$it", if (it <= 2) "maths" else "gk", "Q$it", listOf("a$it", "b$it", "c$it", "d$it"), 1, "")
     }
-    private val picker = QuizPicker(bank, Random(42))
+    private val picker = QuizPicker(bank, random = Random(42))
 
     @Test
     fun optionsShuffleButAnswerStaysCorrect() {
@@ -55,5 +55,20 @@ class QuizPickerTest {
     fun smallCategoryFallsBackToWholeBank() {
         assertEquals(bank, picker.pool("maths"))
         assertEquals(bank, picker.pool("mixed"))
+    }
+}
+
+class MyQuestionsPickerTest {
+    private val bank = (1..5).map { Question("q$it", "gk", "Q$it", listOf("a", "b", "c", "d"), 0, "") }
+    private val day = 24 * 60 * 60 * 1000L
+
+    @Test
+    fun freshOwnQuestionsComeFirstForThreeDays() {
+        val mine = listOf(Question("m1", "mine", "M1", listOf("x", "y"), 1, "", mine = true, addedAt = 10 * day))
+        val picker = QuizPicker(bank, mine, Random(1))
+        assertEquals(mine, picker.pool("gk", 10 * day + 2 * day))
+        val later = picker.pool("gk", 10 * day + 3 * day)
+        assertEquals(6, later.size)
+        assertTrue(later.containsAll(mine))
     }
 }
